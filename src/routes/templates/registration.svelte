@@ -27,9 +27,8 @@
   let quantity = 1;
   let countdowns = {};
   let dateRestrictions = {};
-  let showQuantitySection = false;
-  let showRegistrationForm = false;
   let currentStep = 'select-ticket'; // 'select-ticket', 'single-registration', 'bulk-registration'
+  let highlightSelected = true; // Flag to control highlighting of selected ticket
 
   function updateCountdowns() {
     tickets.forEach(ticket => {
@@ -59,7 +58,6 @@
         }
       }
     });
-    tickets = tickets; // Trigger reactivity
   }
 
   onMount(() => {
@@ -67,10 +65,10 @@
     return () => clearInterval(interval);
   });
 
-  function getTicketStyle(ticket: Ticket): string {
+  function getTicketStyle(ticket) {
     let style = 'relative overflow-hidden rounded-lg transition-all duration-300 ';
     
-    if (ticket.status === 'available' && selectedTicket?.id === ticket.id) {
+    if (ticket.status === 'available' && selectedTicket?.id === ticket.id && highlightSelected) {
       style += 'bg-blue-100 border-blue-500 border-2 ';
     } else {
       switch (ticket.status) {
@@ -92,11 +90,11 @@
     return style;
   }
 
-  function formatPrice(price: number): string {
+  function formatPrice(price) {
     return `₱ ${price.toLocaleString()}`;
   }
 
-  function getTicketStatus(ticket: Ticket): string {
+  function getTicketStatus(ticket) {
     switch (ticket.status) {
       case 'sold_out':
         return 'SOLD OUT';
@@ -111,30 +109,43 @@
     }
   }
 
-  function handleTicketSelect(ticket: Ticket) {
+  function handleTicketSelect(ticket) {
     if (ticket.status === 'available') {
       if (selectedTicket?.id === ticket.id) {
         // Unselect the ticket if it's already selected
         selectedTicket = null;
-        showQuantitySection = false;
         currentStep = 'select-ticket';
       } else {
         // Select the new ticket
         selectedTicket = ticket;
-        showQuantitySection = true;
-        quantity = 1; // Reset quantity when selecting a new ticket
         currentStep = 'select-ticket';
+        highlightSelected = true; // Enable highlighting when selecting a ticket
       }
     }
   }
 
   function handleNext() {
-    currentStep = quantity === 1 ? 'single-registration' : 'bulk-registration';
+    // Show single registration form
+    currentStep = 'single-registration';
+  }
+  
+  function handleBulkRegistration() {
+    currentStep = 'bulk-registration';
   }
 
   function handleBack() {
     currentStep = 'select-ticket';
-    showQuantitySection = true;
+    highlightSelected = false; // Disable highlighting when returning to ticket selection
+  }
+  
+  function handleFormSubmit(event) {
+    console.log('Registration submitted:', event.detail);
+    // Here you would typically send the data to your backend
+    
+    // Reset to ticket selection
+    selectedTicket = null;
+    currentStep = 'select-ticket';
+    highlightSelected = true; // Reset highlighting flag
   }
 </script>
 
@@ -169,7 +180,7 @@
               >
                 <div class="flex justify-between items-start mb-2">
                   <span class="text-base sm:text-lg font-bold">{ticket.name}</span>
-                  {#if ticket.status === 'available' && selectedTicket?.id === ticket.id}
+                  {#if ticket.status === 'available' && selectedTicket?.id === ticket.id && highlightSelected}
                     <span class="absolute top-2 right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
@@ -198,61 +209,61 @@
           {/each}
         </div>
 
-        {#if selectedTicket?.status === 'available' && showQuantitySection}
+        {#if selectedTicket?.status === 'available'}
           <div class="max-w-md mx-auto bg-gray-900/50 backdrop-blur-sm rounded-lg p-4 md:p-6">
-            <div class="mb-6">
-              <div class="flex justify-between items-center mb-4">
-                <span class="text-base sm:text-lg font-semibold">Quantity</span>
-                <div class="flex items-center gap-3 bg-gray-800 rounded-lg">
-                  <button 
-                    class="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-gray-700 rounded-l-lg transition-colors"
-                    on:click={() => quantity = Math.max(1, quantity - 1)}
-                  >
-                    <span class="text-lg sm:text-xl">-</span>
-                  </button>
-                  <span class="w-10 sm:w-12 text-center text-lg sm:text-xl">{quantity}</span>
-                  <button 
-                    class="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-gray-700 rounded-r-lg transition-colors"
-                    on:click={() => quantity = Math.min(selectedTicket.remainingCount || 10, quantity + 1)}
-                  >
-                    <span class="text-lg sm:text-xl">+</span>
-                  </button>
-                </div>
+            <div class="flex justify-between items-center py-4">
+              <span class="text-base sm:text-lg">Selected Ticket</span>
+              <span class="text-lg sm:text-xl font-bold">{selectedTicket.name}</span>
+            </div>
+      
+            <div class="flex flex-col space-y-4">
+              <button 
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 sm:py-4 rounded-lg font-bold text-lg transition-colors"
+                on:click={handleNext}
+              >
+                NEXT
+              </button>
+              
+              <button 
+                class="w-full bg-green-600 hover:bg-green-700 text-white py-3 sm:py-4 rounded-lg font-bold text-lg transition-colors"
+                on:click={handleBulkRegistration}
+                >
+                  BULK REGISTRATION
+                </button>
               </div>
             </div>
-      
-            <div class="flex justify-between items-center py-4 border-t border-gray-700">
-              <span class="text-base sm:text-lg">Total</span>
-              <span class="text-lg sm:text-2xl font-bold">{formatPrice(selectedTicket.price * quantity)}</span>
-            </div>
-      
+          {/if}
+          
+        {:else}
+          <div class="mb-6">
             <button 
-              class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 sm:py-4 rounded-lg font-bold text-lg transition-colors mt-6"
-              on:click={handleNext}
+              class="mb-6 flex items-center text-blue-400 hover:text-blue-300 transition-colors"
+              on:click={handleBack}
             >
-              NEXT
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+              </svg>
+              Back to Ticket Selection
             </button>
+            
+            {#if currentStep === 'single-registration'}
+              <SingleRegistrationForm 
+                {selectedTicket}
+                tickets={tickets}
+                on:submit={handleFormSubmit}
+              />
+            {:else if currentStep === 'bulk-registration'}
+              <BulkRegistrationForm 
+                {selectedTicket}
+                {quantity}
+                tickets={tickets}
+                on:submit={handleFormSubmit}
+              />
+            {/if}
+            
           </div>
         {/if}
-      {:else}
-        <div class="mb-6">
-          <button 
-            class="mb-6 flex items-center text-blue-400 hover:text-blue-300 transition-colors"
-            on:click={handleBack}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-            </svg>
-            Back to Ticket Selection
-          </button>
-          
-          {#if currentStep === 'single-registration'}
-            <SingleRegistrationForm {selectedTicket} />
-          {:else if currentStep === 'bulk-registration'}
-            <BulkRegistrationForm {selectedTicket} {quantity} />
-          {/if}
-        </div>
-      {/if}
+        
     </div>
   </div>
 </main>

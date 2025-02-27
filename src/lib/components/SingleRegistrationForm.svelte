@@ -1,121 +1,171 @@
 <script lang="ts">
-    export let selectedTicket;
+  import { createEventDispatcher } from 'svelte';
+  import type { Ticket } from '../tickets';
+  
+  export let selectedTicket: Ticket;
+  
+  const dispatch = createEventDispatcher();
+  
+  let formData = {
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    address: ''
+  };
+  
+  let errors = {
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    address: ''
+  };
+  
+  function validateForm() {
+    let isValid = true;
     
-    let firstName = '';
-    let lastName = '';
-    let contactNumber = '';
-    let email = '';
-    let agreeToTerms = false;
-  
-    // Email validation
-    function isValidEmail(email: string): boolean {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return emailRegex.test(email);
+    // Reset errors
+    errors = {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      address: ''
+    };
+    
+    if (!formData.firstName.trim()) {
+      errors.firstName = 'First name is required';
+      isValid = false;
     }
-  
-    // Name validation (letters and spaces only)
-    function isValidName(name: string): boolean {
-      const nameRegex = /^[A-Za-z\s]+$/;
-      return nameRegex.test(name);
+    
+    if (!formData.lastName.trim()) {
+      errors.lastName = 'Last name is required';
+      isValid = false;
     }
-  
-    // Phone number validation (numbers only, 11 digits)
-    function isValidPhoneNumber(number: string): boolean {
-      const phoneRegex = /^[0-9]{11}$/;
-      return phoneRegex.test(number);
+    
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required';
+      isValid = false;
+    } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+      errors.email = 'Please enter a valid email';
+      isValid = false;
     }
+    
+    if (!formData.phone.trim()) {
+      errors.phone = 'Phone number is required';
+      isValid = false;
+    }
+    
+    return isValid;
+  }
   
-    $: isFormValid = firstName && 
-                     lastName && 
-                     contactNumber && 
-                     email && 
-                     agreeToTerms && 
-                     isValidEmail(email) &&
-                     isValidName(firstName) &&
-                     isValidName(lastName) &&
-                     isValidPhoneNumber(contactNumber);
-  </script>
-  
-  <div class="bg-gray-900/50 backdrop-blur-sm rounded-lg p-4 md:p-6">
-    <div class="space-y-4">
+  function handleSubmit() {
+    if (validateForm()) {
+      // Process form submission
+      dispatch('submit', { 
+        ticket: selectedTicket,
+        attendee: formData,
+        quantity: 1
+      });
+      
+      alert('Registration successful!');
+      
+      // Reset form
+      formData = {
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: '',
+        address: ''
+      };
+    }
+  }
+</script>
+
+<div class="bg-gray-800/50 rounded-lg p-6">
+  <div class="mb-6">
+    <h3 class="text-xl font-bold mb-2">Ticket Information</h3>
+    <div class="flex justify-between items-center p-4 bg-gray-700/50 rounded-lg">
       <div>
-        <label class="block text-sm font-medium mb-1" for="firstName">First Name</label>
-        <input
-          type="text"
-          id="firstName"
-          bind:value={firstName}
-          class="w-full px-3 py-2 bg-gray-800 rounded-lg text-white"
-          placeholder="Enter first name"
-        />
-        {#if firstName && !isValidName(firstName)}
-          <p class="text-red-500 text-sm mt-1">Please enter a valid name (letters only)</p>
-        {/if}
-        
+        <p class="font-semibold">{selectedTicket.name}</p>
+        <p class="text-sm text-gray-300">Quantity: 1</p>
       </div>
-  
-      <div>
-        <label class="block text-sm font-medium mb-1" for="lastName">Last Name</label>
-        <input
-          type="text"
-          id="lastName"
-          bind:value={lastName}
-          class="w-full px-3 py-2 bg-gray-800 rounded-lg text-white"
-          placeholder="Enter last name"
-        />
-        {#if lastName && !isValidName(lastName)}
-          <p class="text-red-500 text-sm mt-1">Please enter a valid name (letters only)</p>
-        {/if}
-        
-      </div>
-  
-      <div>
-        <label class="block text-sm font-medium mb-1" for="contactNumber">Contact Number</label>
-        <input
-          type="tel"
-          id="contactNumber"
-          bind:value={contactNumber}
-          class="w-full px-3 py-2 bg-gray-800 rounded-lg text-white"
-          placeholder="Enter 11-digit number"
-          maxlength="11"
-        />
-        {#if contactNumber && !isValidPhoneNumber(contactNumber)}
-          <p class="text-red-500 text-sm mt-1">Please enter a valid 11-digit phone number</p>
-        {/if}
-        
-      </div>
-  
-      <div>
-        <label class="block text-sm font-medium mb-1" for="email">Email</label>
-        <input
-          type="email"
-          id="email"
-          bind:value={email}
-          class="w-full px-3 py-2 bg-gray-800 rounded-lg text-white"
-          placeholder="Enter email address"
-        />
-        {#if email && !isValidEmail(email)}
-          <p class="text-red-500 text-sm mt-1">Please enter a valid email address</p>
-        {/if}
-        
-      </div>
-  
-      <div class="flex items-center gap-2">
-        <input
-          type="checkbox"
-          id="terms"
-          bind:checked={agreeToTerms}
-          class="w-4 h-4 rounded"
-        />
-        <label for="terms" class="text-sm">
-          I agree to the Concert Waiver and Terms of Agreement
-        </label>
-      </div>
-  
-      <button 
-        class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        disabled={!isFormValid}
-      >
-        Submit Registration
-      </button>
+      <p class="text-xl font-bold">₱ {selectedTicket.price.toLocaleString()}</p>
     </div>
   </div>
+
+  <h3 class="text-xl font-bold mb-4">Attendee Information</h3>
+  <form on:submit|preventDefault={handleSubmit} class="space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div>
+        <label for="firstName" class="block text-sm font-medium mb-1">First Name *</label>
+        <input 
+          type="text" 
+          id="firstName" 
+          bind:value={formData.firstName} 
+          class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        {#if errors.firstName}
+          <p class="text-red-400 text-sm mt-1">{errors.firstName}</p>
+        {/if}
+      </div>
+      
+      <div>
+        <label for="lastName" class="block text-sm font-medium mb-1">Last Name *</label>
+        <input 
+          type="text" 
+          id="lastName" 
+          bind:value={formData.lastName} 
+          class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        {#if errors.lastName}
+          <p class="text-red-400 text-sm mt-1">{errors.lastName}</p>
+        {/if}
+      </div>
+    </div>
+    
+    <div>
+      <label for="email" class="block text-sm font-medium mb-1">Email *</label>
+      <input 
+        type="email" 
+        id="email" 
+        bind:value={formData.email} 
+        class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      {#if errors.email}
+        <p class="text-red-400 text-sm mt-1">{errors.email}</p>
+      {/if}
+    </div>
+    
+    <div>
+      <label for="phone" class="block text-sm font-medium mb-1">Phone Number *</label>
+      <input 
+        type="tel" 
+        id="phone" 
+        bind:value={formData.phone} 
+        class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      {#if errors.phone}
+        <p class="text-red-400 text-sm mt-1">{errors.phone}</p>
+      {/if}
+    </div>
+    
+    <div>
+      <label for="address" class="block text-sm font-medium mb-1">Address</label>
+      <textarea 
+        id="address" 
+        bind:value={formData.address} 
+        rows="3" 
+        class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+      ></textarea>
+    </div>
+    
+    <button 
+      type="submit" 
+      class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold text-lg transition-colors mt-4"
+    >
+      COMPLETE REGISTRATION
+    </button>
+  </form>
+</div>
