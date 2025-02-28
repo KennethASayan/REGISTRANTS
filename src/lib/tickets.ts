@@ -1,10 +1,8 @@
-export type TicketStatus = 'available' | 'sold_out' | 'countdown' | 'date_restricted';
-
 export interface Ticket {
   id: string;
   name: string;
   price: number;
-  status: TicketStatus;
+  status: 'available' | 'sold_out' | 'countdown' | 'date_restricted';
   remainingCount?: number;
   countdownTime?: string;
   availableFrom?: string;
@@ -13,43 +11,36 @@ export interface Ticket {
 
 export const tickets: Ticket[] = [
   {
-    id: 'vip',
-    name: 'VIP Ticket',
-    price: 5000,
+    id: '1',
+    name: 'General Admission',
+    price: 1500,
+    status: 'available',
+    remainingCount: 150
+  },
+  {
+    id: '2',
+    name: 'VIP Access',
+    price: 3000,
     status: 'available',
     remainingCount: 50
   },
   {
-    id: 'regular',
-    name: 'Regular Ticket',
-    price: 2500,
-    status: 'available',
-    remainingCount: 200
-  },
-  {
-    id: 'early-bird',
+    id: '3',
     name: 'Early Bird',
-    price: 1800,
+    price: 1200,
     status: 'sold_out'
   },
   {
-    id: 'student',
-    name: 'Student Ticket',
-    price: 1200,
-    status: 'available',
-    remainingCount: 100
-  },
-  {
-    id: 'flash-sale',
-    name: 'Flash Sale',
-    price: 1500,
+    id: '4',
+    name: 'Premium Package',
+    price: 5000,
     status: 'countdown',
-    countdownTime: '01:30:00'
+    countdownTime: '48:00:00'
   },
   {
-    id: 'weekend-pass',
-    name: 'Weekend Pass',
-    price: 3500,
+    id: '5',
+    name: 'Group Discount',
+    price: 1200,
     status: 'date_restricted',
     availableFrom: '2025-06-01',
     availableTo: '2025-06-15'

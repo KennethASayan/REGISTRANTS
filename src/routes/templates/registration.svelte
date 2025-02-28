@@ -125,12 +125,12 @@
   }
 
   function handleNext() {
-    // Show single registration form
-    currentStep = 'single-registration';
-  }
-  
-  function handleBulkRegistration() {
-    currentStep = 'bulk-registration';
+    // Determine which form to show based on quantity
+    if (quantity > 1) {
+      currentStep = 'bulk-registration';
+    } else {
+      currentStep = 'single-registration';
+    }
   }
 
   function handleBack() {
@@ -144,9 +144,13 @@
     
     // Reset to ticket selection
     selectedTicket = null;
+    quantity = 1;
     currentStep = 'select-ticket';
     highlightSelected = true; // Reset highlighting flag
   }
+  
+  // Calculate total price based on selected ticket and quantity
+  $: totalPrice = selectedTicket ? selectedTicket.price * quantity : 0;
 </script>
 
 <main class="min-h-screen bg-gradient-to-b from-[#102127] to-[#3B788D] text-white p-4">
@@ -215,6 +219,44 @@
               <span class="text-base sm:text-lg">Selected Ticket</span>
               <span class="text-lg sm:text-xl font-bold">{selectedTicket.name}</span>
             </div>
+            
+            <div class="mb-4">
+              <label for="quantity" class="block text-sm font-medium mb-2">Quantity</label>
+              <div class="flex items-center">
+                <button 
+                  class="bg-gray-700 hover:bg-gray-600 text-white w-10 h-10 rounded-l-lg flex items-center justify-center"
+                  on:click={() => quantity = Math.max(1, quantity - 1)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+                <input 
+                  type="" 
+                  id="quantity" 
+                  bind:value={quantity} 
+                  min="1" 
+                  max={selectedTicket.remainingCount} 
+                  class="w-16 h-10 bg-gray-700 border-0 text-center text-white focus:outline-none focus:ring-0"
+                />
+                <button 
+                  class="bg-gray-700 hover:bg-gray-600 text-white w-10 h-10 rounded-r-lg flex items-center justify-center"
+                  on:click={() => quantity = Math.min(selectedTicket.remainingCount, quantity + 1)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+              <div class="flex justify-between items-center mt-2">
+                <p class="text-sm text-gray-400">
+                  {quantity > 1 ? 'Bulk registration will be used' : 'Single registration will be used'}
+                </p>
+                <p class="text-lg font-bold text-white">
+                  Total: {formatPrice(totalPrice)}
+                </p>
+              </div>
+            </div>
       
             <div class="flex flex-col space-y-4">
               <button 
@@ -223,46 +265,39 @@
               >
                 NEXT
               </button>
-              
-              <button 
-                class="w-full bg-green-600 hover:bg-green-700 text-white py-3 sm:py-4 rounded-lg font-bold text-lg transition-colors"
-                on:click={handleBulkRegistration}
-                >
-                  BULK REGISTRATION
-                </button>
-              </div>
             </div>
-          {/if}
-          
-        {:else}
-          <div class="mb-6">
-            <button 
-              class="mb-6 flex items-center text-blue-400 hover:text-blue-300 transition-colors"
-              on:click={handleBack}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
-              </svg>
-              Back to Ticket Selection
-            </button>
-            
-            {#if currentStep === 'single-registration'}
-              <SingleRegistrationForm 
-                {selectedTicket}
-                tickets={tickets}
-                on:submit={handleFormSubmit}
-              />
-            {:else if currentStep === 'bulk-registration'}
-              <BulkRegistrationForm 
-                {selectedTicket}
-                {quantity}
-                tickets={tickets}
-                on:submit={handleFormSubmit}
-              />
-            {/if}
-            
           </div>
         {/if}
+          
+      {:else}
+        <div class="mb-6">
+          <button 
+            class="mb-6 flex items-center text-blue-400 hover:text-blue-300 transition-colors"
+            on:click={handleBack}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+            </svg>
+            Back to Ticket Selection
+          </button>
+          
+          {#if currentStep === 'single-registration'}
+            <SingleRegistrationForm 
+              {selectedTicket}
+              tickets={tickets}
+              on:submit={handleFormSubmit}
+            />
+          {:else if currentStep === 'bulk-registration'}
+            <BulkRegistrationForm 
+              {selectedTicket}
+              {quantity}
+              tickets={tickets}
+              on:submit={handleFormSubmit}
+            />
+          {/if}
+          
+        </div>
+      {/if}
         
     </div>
   </div>
